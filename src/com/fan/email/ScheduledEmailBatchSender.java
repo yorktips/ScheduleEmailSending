@@ -2,6 +2,7 @@ package com.fan.email;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -286,10 +287,19 @@ public class ScheduledEmailBatchSender extends Thread{
 		String body=email_template;
 		String title=email_title;
 		// Recipient's email ID needs to be mentioned.
-		String to=(String)member.get("email");
-		if (to==null) return ret;
-		body=doRepalce(body,member);
-		title=doRepalce(title,member);
+		String to=emailTempalte.getSend_to_list();//(String)member.get("email");
+		String cc=emailTempalte.getSend_cc();
+		String bcc=emailTempalte.getSend_bcc();
+		
+		if ("sql".equalsIgnoreCase(emailTempalte.getSend_to_type())) {
+			to=doRepalceEmail(to,member);
+			cc=doRepalceEmail(cc,member);
+			bcc=doRepalceEmail(bcc,member);
+			body=doRepalce(body,member);
+			title=doRepalce(title,member);
+		}
+		
+		if (to==null || body==null) return ret;
 
 		final String username = emailTempalte.getSmtp_username();
 		final String password = emailTempalte.getSmtp_password();
@@ -335,7 +345,8 @@ public class ScheduledEmailBatchSender extends Thread{
 			}
 
 			//2. Set CC
-			String[] ccEmails=toArrays(emailTempalte.getSend_cc());
+			String[] ccEmails=toArrays(cc);
+			ccEmails=removeDuplicatedIn(ccEmails,toEmails);
 			if (ccEmails!=null) {
 				for (String ccEmail:ccEmails) {
 					if (ccEmail!=null && !"".equalsIgnoreCase(ccEmail))
@@ -344,7 +355,9 @@ public class ScheduledEmailBatchSender extends Thread{
 			}
 		
 			//3. Set BCC
-			String[] bccEmails=toArrays(emailTempalte.getSend_bcc());
+			String[] bccEmails=toArrays(bcc);
+			bccEmails=removeDuplicatedIn(bccEmails,toEmails);
+			bccEmails=removeDuplicatedIn(bccEmails,ccEmails);
 			if (bccEmails!=null) {
 				for (String bccEmail:bccEmails) {
 					if (bccEmail!=null && !"".equalsIgnoreCase(bccEmail))
@@ -381,6 +394,33 @@ public class ScheduledEmailBatchSender extends Thread{
 		return ret;
 	}
 	
+	//Remove all items that exist in removelist from removeFrom
+	//The purpose of the method is prevent from putting same email in both TO and CC/BCC 
+	public static String[] removeDuplicatedIn(String[] fromArray,String[] removeArray){
+		if (fromArray==null) 
+			return null;
+		if (removeArray==null)
+			return fromArray;
+		
+		ArrayList<String> listFrom = new ArrayList<String>(Arrays.asList(fromArray));
+		ArrayList<String> removelist = new ArrayList<String>(Arrays.asList(removeArray));
+		ArrayList<String> emails= new ArrayList<String>();
+		for(String email1:listFrom) {
+			boolean bFind=false;
+			for(String email2:removelist) {
+				if (email1!=null && email1.equalsIgnoreCase(email2)) {
+					bFind=true;
+				}				
+			}
+			if (!bFind)
+				emails.add(email1);
+		}
+		
+		return emails.toArray(new String[emails.size()]);
+	}
+	
+	
+	//[[email]] -> fan8@gmail.com
 	public static String doRepalce(String str, HashMap<String,Object> member){
 		String ret=str;
 		Set<String> columns=member.keySet();
@@ -393,6 +433,18 @@ public class ScheduledEmailBatchSender extends Thread{
 		return ret;
 	}
 
+	public static String doRepalceEmail(String str, HashMap<String,Object> member){
+		String ret=str;
+		String[] columns={"email","EMAIL","Email","e-mail", "E-mail","e-Mail"};
+		for (String column:columns) {
+			Object value=member.get(column);
+			if (value!=null) {
+				ret=ret.replace("[[" + column + "]]",member.get(column).toString());
+			}
+		}
+		return ret;
+	}
+	
 	//emails="fan1@gmail.com;fan2@gmail.com"
 	public static String[] toArrays(String emails) {
 		if (emails==null || "".equals(emails))
