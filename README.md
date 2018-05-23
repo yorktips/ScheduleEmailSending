@@ -1,6 +1,9 @@
 "# ScheduleEmailSending" 
 
+
 drop table email_template;
+
+
 create table student(
    id INT NOT NULL AUTO_INCREMENT,
    first_name VARCHAR(100) NOT NULL,
@@ -12,6 +15,8 @@ create table student(
    code VARCHAR(50) NULL,
    PRIMARY KEY ( id )
 );
+
+
 
 --select to_char(id) as id, first_name, last_name, sex from student order by id;
 --schedule_type: hourly, daily, weekly, monthly, yearly
@@ -41,6 +46,8 @@ create table email_template(
    last_finish_at  DATE null,
    PRIMARY KEY ( id )
 );
+
+
 
 insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task_name, send_from,schedule_type,
                            schedule_time,send_to_type,send_to_list,send_cc,send_to_sql,
