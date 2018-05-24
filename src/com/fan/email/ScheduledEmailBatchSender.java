@@ -270,7 +270,9 @@ public class ScheduledEmailBatchSender extends Thread{
 	    while (rs.next()) {
 	        HashMap<String,Object> row = new HashMap<String, Object>(columns);
 	        for(int i=1; i<=columns; ++i) {
-	            row.put(md.getColumnName(i),rs.getObject(i));
+	        	loger.debug("columnName=" + md.getColumnName(i) + ";ColumnLabel=" + md.getColumnLabel(i)+ ",value=" +rs.getObject(i) );
+	        	//System.out.println("columnName=" + md.getColumnName(i) + ";ColumnLabel=" + md.getColumnLabel(i)+ ",value=" +rs.getObject(i) );
+	            row.put(md.getColumnLabel(i),rs.getObject(i));
 	        }
 	        list.add(row);
 	    }
