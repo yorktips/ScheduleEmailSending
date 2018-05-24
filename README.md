@@ -25,7 +25,8 @@ create table student(
 -- If you use a variable , such as [[email]], send_to_type must be "sql"
 -- if send_to_type is "sql", you must have send_to_sql
 --Need to set Windows task schedule run every minute if schedule_time is set. Example 1130
---
+--run "java -jar emailsending.jar" to start the email sending task
+
 drop table email_template;
 create table email_template(
    id INT NOT NULL AUTO_INCREMENT,
