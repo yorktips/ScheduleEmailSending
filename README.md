@@ -21,7 +21,11 @@ create table student(
 --select to_char(id) as id, first_name, last_name, sex from student order by id;
 --schedule_type: hourly, daily, weekly, monthly, yearly
 --email_body_type: text or html
+--send_to_list: fan2@gmail;[[email]]
+-- If you use a variable , such as [[email]], send_to_type must be "sql"
+-- if send_to_type is "sql", you must have send_to_sql
 --Need to set Windows task schedule run every minute if schedule_time is set. Example 1130
+--
 drop table email_template;
 create table email_template(
    id INT NOT NULL AUTO_INCREMENT,
@@ -46,6 +50,8 @@ create table email_template(
    last_finish_at  DATE null,
    PRIMARY KEY ( id )
 );
+
+
 
 
 
