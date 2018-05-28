@@ -1,5 +1,8 @@
 package com.fan.email.util;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,6 +14,17 @@ public class StringToDateUtil {
 
 	private List<SimpleDateFormat> sdfList;
 
+	public static String readFileAsString(String fileName) { 
+		String text = ""; 
+		try { 
+			text = new String(Files.readAllBytes(Paths.get(fileName))); 
+		} catch (IOException e) { 
+			e.printStackTrace(); 
+		} 
+		return text; 
+	}
+
+		
 	public StringToDateUtil() {
 		sdfList=  new ArrayList<SimpleDateFormat>();
 		sdfList.add(new SimpleDateFormat("dd MMM yyyy"));
@@ -49,6 +63,9 @@ public class StringToDateUtil {
 	}
 
 	public static void main(String args[]) throws Exception {
+		
+		String fa=StringToDateUtil.readFileAsString("C:\\fa\\x.txt");
+		System.out.println(fa);
 		List<SimpleDateFormat> formatList = new ArrayList<SimpleDateFormat>();
 		formatList.add(new SimpleDateFormat("dd MMM yyyy"));
 		formatList.add(new SimpleDateFormat("M/dd/yyyy"));

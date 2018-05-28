@@ -9,11 +9,13 @@ import java.util.Properties;
 import java.util.Set;
 
 
+
 //import java.util.logging.Logger;
 import org.apache.log4j.Logger;
 
 import com.fan.email.entity.EmailTemplate;
 import com.fan.email.util.DateAndTime;
+import com.fan.email.util.StringToDateUtil;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -26,7 +28,6 @@ import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.sql.*;
 
-
 public class ScheduledEmailBatchSender extends Thread{
 	static Logger loger = Logger.getLogger(ScheduledEmailBatchSender.class.getName());
 	private Connection conn = null;
@@ -36,6 +37,8 @@ public class ScheduledEmailBatchSender extends Thread{
 	private String USER=null;
 	private String PASS=null;
 
+	private List<EmailTemplate> emailTempaltes=null;
+	
 	//private boolean connect(String JDBC_DRIVER , String DB_URL,String USER,String PASS ) {
 	private boolean connect() {
 		boolean ret=false;
@@ -95,8 +98,10 @@ public class ScheduledEmailBatchSender extends Thread{
 		
 		Statement stmt = null;
 		try {
-			List<EmailTemplate> emailTempaltes=getEmailTemplates(conn);
-
+			List<EmailTemplate> emailTempaltes=getEmailSchedules();
+			if (emailTempaltes==null)
+				emailTempaltes=getEmailTemplates(conn);
+			
 			for (EmailTemplate emailTempalte : emailTempaltes) {
 				if (needTriggerSending(emailTempalte)) {
 					updateEmailJobScheduleStatus("last_send_at",emailTempalte);
@@ -284,9 +289,14 @@ public class ScheduledEmailBatchSender extends Thread{
 	public static boolean sendEmail(EmailTemplate emailTempalte,HashMap<String,Object> member){
 		boolean ret=false;
 		String   email_title=emailTempalte.getEmail_title();
-		String   email_template=emailTempalte.getEmail_template();
+		String   email_template_file=emailTempalte.getEmail_template();
 		
+		String email_template=StringToDateUtil.readFileAsString(email_template_file);
 		String body=email_template;
+		if ("".equalsIgnoreCase(email_template)){
+			body=email_template_file;
+		}
+		
 		String title=email_title;
 		// Recipient's email ID needs to be mentioned.
 		String to=emailTempalte.getSend_to_list();//(String)member.get("email");
@@ -493,4 +503,13 @@ public class ScheduledEmailBatchSender extends Thread{
     {
     	//disConnect();
     }	
+    
+    public void setEmailTempaltes(List<EmailTemplate> emailTempaltes){
+    	this.emailTempaltes=emailTempaltes;
+    }
+
+    public List<EmailTemplate> getEmailSchedules(){
+    	return this.emailTempaltes;
+    }
+    
 }
