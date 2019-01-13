@@ -56,7 +56,7 @@ create table email_sent_history(
  -- 2. Prepare data for email sending
  
 --select to_char(id) as id, first_name, last_name, sex from student order by id;
---schedule_type: hourly, daily, weekly, monthly, yearly
+--schedule_type: hourly, daily, weekly, monthly, yearly. Or just set NULL and controled by Task Schedule time in Windows.
 --email_body_type: text or html
 --send_to_list: fan2@gmail;[[email]]
 -- If you use a variable , such as [[email]], send_to_type must be "sql"
