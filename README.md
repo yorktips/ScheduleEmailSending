@@ -27,6 +27,13 @@ create table student(
 --Need to set Windows task schedule run every minute if schedule_time is set. Example 1130
 --run "java -jar emailsending.jar" to start the email sending task
 
+select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth, char) as dateOfBirth , email, CONVERT(studyPermExpire, char) as studyPermExpire , TIMESTAMPDIFF(DAY,  sysdate(),studyPermExpire) as expiredWithin  
+	from tblstudent
+	  where studyPermExpire is not null 
+		and studyPermExpire >'0000-00-00' 
+        -- and TIMESTAMPDIFF(MONTH,  sysdate(),studyPermExpire) <3
+		and  TIMESTAMPDIFF(DAY,  sysdate(),studyPermExpire) <90;
+		
 drop table email_template;
 create table email_template(
    id INT NOT NULL AUTO_INCREMENT,
