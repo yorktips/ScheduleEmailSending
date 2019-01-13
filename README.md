@@ -168,20 +168,22 @@ commit;
 
 
 
+drop function     FUN_THIS_YEAR_BIRTHDAY;
+
 DELIMITER $$
 CREATE FUNCTION FUN_THIS_YEAR_BIRTHDAY(dateOfBirth Date)
     RETURNS DATE
     BEGIN
         DECLARE sDate CHAR(25);
 		if dateOfBirth is null then
-			return CONVEDRT('0000-00-00',DATE);
+			return convert('0000-00-00',DATE);
 		END IF;
 		if CONVERT(dateOfBirth, CHAR) ='0000-00-00' then
-			return CONVEDRT('0000-00-00',DATE);
+			return convert('0000-00-00',DATE);
 		END IF;
 		
 		SET sDate=concat(SUBSTRING(convert(sysdate(),char), 1, 5),  SUBSTRING(convert(dateOfBirth,char), 6, 5));
-		return CONVEDRT(sDate,DATE);
+		return convert(sDate,DATE);
     END $$
 
-DELIMITER ;  
+DELIMITER ;                    
