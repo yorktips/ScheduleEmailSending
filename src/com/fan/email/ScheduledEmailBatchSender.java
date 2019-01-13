@@ -225,6 +225,7 @@ public class ScheduledEmailBatchSender extends Thread{
 				if (sendEmail(emailTempalte,member)){
 					ret++;
 					loger.info( "Sent email to " + member.get("email"));
+					addEmailSentHistory(emailTempalte, member);
 				}else{
 					loger.info( "Failed to send email to " + member.get("email"));
 				}
@@ -281,7 +282,7 @@ public class ScheduledEmailBatchSender extends Thread{
 	}
 	
 	//member must includes "email" column name
-	public static boolean sendEmail(EmailTemplate emailTempalte,HashMap<String,Object> member){
+	public boolean sendEmail(EmailTemplate emailTempalte,HashMap<String,Object> member){
 		boolean ret=false;
 		String   email_title=emailTempalte.getEmail_title();
 		String   email_template=emailTempalte.getEmail_template();
@@ -455,6 +456,64 @@ public class ScheduledEmailBatchSender extends Thread{
 		lists=lists.replace(":",";");
         String[] ret=lists.split(";");
         return ret;
+	}
+	
+	
+	//Add the email send info to email send history table
+	//So we know "happy birthday email has been send. 
+	//
+	public void addEmailSentHistory(EmailTemplate emailTempalte, HashMap<String,Object> member){
+		String eamil=null;
+	    int email_template_id=0;
+		String task_name=null; //happy-birthday-email
+		String schedule_type=null; // daily
+		String email_title=null;//Happy Birthday Fan!
+		Date send_at=null;
+		
+		if (emailTempalte==null ) {
+			loger.error("emailTempalte is null");
+			return;
+		}
+		if (member==null || member.get("email")==null ) {
+			loger.error("column email doesn't exist or null value");
+			return;
+		}
+		eamil=member.get("email").toString();
+		email_template_id=emailTempalte.getId();
+		task_name=emailTempalte.getTask_name();
+		schedule_type=emailTempalte.getSchedule_type();
+		email_title=emailTempalte.getEmail_title();
+		
+		String sql="insert into email_sent_history(email, email_template_id, task_name, schedule_type, email_title,send_at) values (";
+		sql +="'" + eamil + "'";
+		sql += "," + email_template_id;
+		sql += ",'" + task_name + "'";
+		sql += ",'" + schedule_type + "'";
+		sql += ",'" + email_title + "'";
+		sql += ",sysdate()) ";
+		Statement stmt = null;
+		
+		try {
+			stmt = this.conn.createStatement();
+			stmt.executeUpdate(sql);
+			loger.info(eamil + " send " + email_title + " " +  schedule_type);
+					
+		} catch (SQLException se) {
+			loger.error(se);
+			// Handle errors for JDBC
+			se.printStackTrace();
+		} catch (Exception e) {
+			loger.error(e);
+			e.printStackTrace();
+		} finally {
+			// finally block used to close resources
+			try {
+				if (stmt != null)
+					stmt.close();
+			} catch (SQLException se) {
+			}// do nothing
+		}
+
 	}
 	
 	//column=last_send_at,last_finish_at
