@@ -1,5 +1,27 @@
 "# ScheduleEmailSending" 
 
+-- 0. Create function FUN_THIS_YEAR_BIRTHDAY
+drop function     FUN_THIS_YEAR_BIRTHDAY;
+
+DELIMITER $$
+CREATE FUNCTION FUN_THIS_YEAR_BIRTHDAY(dateOfBirth Date)
+    RETURNS DATE
+    BEGIN
+        DECLARE sDate CHAR(25);
+		if dateOfBirth is null then
+			return convert('0000-00-00',DATE);
+		END IF;
+		if CONVERT(dateOfBirth, CHAR) ='0000-00-00' then
+			return convert('0000-00-00',DATE);
+		END IF;
+		
+		SET sDate=concat(SUBSTRING(convert(sysdate(),char), 1, 5),  SUBSTRING(convert(dateOfBirth,char), 6, 5));
+		return convert(sDate,DATE);
+    END $$
+
+DELIMITER ; 
+
+
 -- 1. Create tables
 -- Create one if not exist
 create table student(
@@ -139,11 +161,11 @@ select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth,
 	from tblstudent
 	  where dateOfBirth is not null 
 		and dateOfBirth >'0000-00-00' 
-		and  TIMESTAMPDIFF(DAY,  sysdate(),dateOfBirth) =1
+		and  TIMESTAMPDIFF(DAY,  FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1
 		and email not in (select email from email_sent_history
 					where task_name='happy-birthday-email'
 					and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) <369 );
-
+    
 insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task_name, send_from,schedule_type,
         schedule_time,send_to_type,send_to_list,send_cc,send_to_sql,
 	   email_title,email_body_type,email_template,last_send_at)
@@ -159,7 +181,7 @@ insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task
 	'sql',
 	'[[email]];fan@gmail.com',
 	'fan2@gmail.com',
-    'select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth, char) as dateOfBirth , email from tblstudent where dateOfBirth is not null and dateOfBirth >0 and  TIMESTAMPDIFF(DAY,  sysdate(),dateOfBirth) =1 and email not in (select email from email_sent_history where task_name=''happy-birthday-email'' and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) < 360)',
+    'select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth, char) as dateOfBirth , email from tblstudent where dateOfBirth is not null and dateOfBirth >0 and TIMESTAMPDIFF(DAY,  FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1 and email not in (select email from email_sent_history where task_name=''happy-birthday-email'' and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) < 360)',
 	'Happy Birthday [[first_name]]!',
 	'html',
 	'Dear [[first_name]] [[last_name]], Wish you have a happy birthday!',
@@ -168,22 +190,4 @@ commit;
 
 
 
-drop function     FUN_THIS_YEAR_BIRTHDAY;
-
-DELIMITER $$
-CREATE FUNCTION FUN_THIS_YEAR_BIRTHDAY(dateOfBirth Date)
-    RETURNS DATE
-    BEGIN
-        DECLARE sDate CHAR(25);
-		if dateOfBirth is null then
-			return convert('0000-00-00',DATE);
-		END IF;
-		if CONVERT(dateOfBirth, CHAR) ='0000-00-00' then
-			return convert('0000-00-00',DATE);
-		END IF;
-		
-		SET sDate=concat(SUBSTRING(convert(sysdate(),char), 1, 5),  SUBSTRING(convert(dateOfBirth,char), 6, 5));
-		return convert(sDate,DATE);
-    END $$
-
-DELIMITER ;                    
+                   
