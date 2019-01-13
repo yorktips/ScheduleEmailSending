@@ -54,7 +54,17 @@ create table email_template(
 
 
 
-
+drop table email_sent_history;
+create table email_sent_history( 
+	id INT NOT NULL AUTO_INCREMENT, 
+	eamil VARCHAR(100) NOT NULL, 
+    email_template_id INT ,
+	task_name VARCHAR(100) NOT NULL, -- happy-birthday-email
+	schedule_type VARCHAR(20) NOT NULL, -- daily
+	email_title VARCHAR(100) NOT NULL, -- Happy Birthday Fan!
+	send_at DATE null, 
+    PRIMARY KEY ( id ));
+    
 
 insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task_name, send_from,schedule_type,
                            schedule_time,send_to_type,send_to_list,send_cc,send_to_sql,
