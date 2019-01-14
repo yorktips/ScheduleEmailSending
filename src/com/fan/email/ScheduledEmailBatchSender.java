@@ -105,6 +105,7 @@ public class ScheduledEmailBatchSender extends Thread{
 				}
 			}
 		}catch(Exception e) {
+			e.printStackTrace();
 			loger.error(e);
 		}finally{
 			try {
@@ -178,6 +179,8 @@ public class ScheduledEmailBatchSender extends Thread{
 		return templates;
 	}
 	
+	//This function is for future purpose.Currently, always return true.
+	//Job schedule is supposed to set in Windows daily task schedule. 
 	public static boolean needTriggerSending(EmailTemplate emailTempalte) {
 		boolean bret=false;
 		int nHoursEclipsed=0;
@@ -296,27 +299,39 @@ public class ScheduledEmailBatchSender extends Thread{
 		
 		if ("sql".equalsIgnoreCase(emailTempalte.getSend_to_type())) {
 			to=doRepalceEmail(to,member);
-			cc=doRepalceEmail(cc,member);
-			bcc=doRepalceEmail(bcc,member);
+			if (to==null || to.length()<2)
+				to=member.get("email").toString();
+			
+			//cc=doRepalceEmail(cc,member);
+			//bcc=doRepalceEmail(bcc,member);
 			body=doRepalce(body,member);
 			title=doRepalce(title,member);
+			
 		}
 		
-		if (to==null || body==null) return ret;
+		if (to==null || title==null) return ret;
 
-		final String username = emailTempalte.getSmtp_username();
-		final String password = emailTempalte.getSmtp_password();
+		String username = emailTempalte.getSmtp_username();
+		String password = emailTempalte.getSmtp_password();
 		Properties props = new Properties();
 		
 		// Sender's email ID needs to be mentioned
 		String from = emailTempalte.getSend_from();// change accordingly
+		//Need to enable from google account first.
+		//https://myaccount.google.com/lesssecureapps?utm_source=google-account&utm_medium=web
 		if ("smtp.gmail.com".equalsIgnoreCase(emailTempalte.getSmtp_host())){
 			// Assuming you are sending email through relay.jangosmtp.net
 			props.put("mail.smtp.auth", "true");
 			props.put("mail.smtp.starttls.enable", "true");
 			props.put("mail.smtp.host", emailTempalte.getSmtp_host());
 			// https://myaccount.google.com/lesssecureapps?pli=1
-			props.put("mail.smtp.port", emailTempalte.getSmtp_port()); // 465 or 587
+			//props.put("mail.smtp.port", emailTempalte.getSmtp_port()); // 465 or 587
+			//props.put("mail.smtp.host", "smtp.gmail.com");
+			//props.put("mail.smtp.socketFactory.port", "587");
+			//props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+			//props.put("mail.smtp.port", "465");
+			//username="freehdmonitor@gmail.com";
+			//password="pasi6733";
 		}else{
 			props.put("mail.smtp.auth", "true");
 			props.put("mail.smtp.starttls.enable", "true");
@@ -328,7 +343,7 @@ public class ScheduledEmailBatchSender extends Thread{
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
 					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication(username, password);
+						return new PasswordAuthentication("freehdmonitor@gmail.com", "pasi6733");
 					}
 				});
 
@@ -344,6 +359,7 @@ public class ScheduledEmailBatchSender extends Thread{
 			if (toEmails==null)
 				return ret;
 			for (String toEmail:toEmails) {
+				loger.debug("toEmail=" + toEmail);
 				message.setRecipients(Message.RecipientType.TO,InternetAddress.parse(toEmail));
 			}
 
@@ -352,6 +368,7 @@ public class ScheduledEmailBatchSender extends Thread{
 			ccEmails=removeDuplicatedIn(ccEmails,toEmails);
 			if (ccEmails!=null) {
 				for (String ccEmail:ccEmails) {
+					loger.debug("ccEmail=" + ccEmail);
 					if (ccEmail!=null && !"".equalsIgnoreCase(ccEmail))
 						message.setRecipients(Message.RecipientType.CC,InternetAddress.parse(ccEmail));
 				}
@@ -363,6 +380,7 @@ public class ScheduledEmailBatchSender extends Thread{
 			bccEmails=removeDuplicatedIn(bccEmails,ccEmails);
 			if (bccEmails!=null) {
 				for (String bccEmail:bccEmails) {
+					loger.debug("bccEmail=" + bccEmail);
 					if (bccEmail!=null && !"".equalsIgnoreCase(bccEmail))
 						message.setRecipients(Message.RecipientType.BCC,InternetAddress.parse(bccEmail));
 				}
@@ -370,7 +388,8 @@ public class ScheduledEmailBatchSender extends Thread{
 			
 			// Set Subject: header field
 			message.setSubject(title);
-
+			loger.debug("title=" + title);
+			loger.debug("body=" + body);
 			// Now set the actual message
 			if ("html".equalsIgnoreCase(emailTempalte.getEmail_body_type())) {
 				message.setContent(body, "text/html");
@@ -378,10 +397,6 @@ public class ScheduledEmailBatchSender extends Thread{
 				message.setText(body);
 			}
 			
-			loger.info("to=" + to);
-			loger.info("cc=" + emailTempalte.getSend_cc());
-			loger.info("title=" + title);
-			loger.debug("body=" + body);
 			loger.info("Sending....");
 
 			// Send message
@@ -428,21 +443,29 @@ public class ScheduledEmailBatchSender extends Thread{
 		String ret=str;
 		Set<String> columns=member.keySet();
 		for (String column:columns) {
+			
 			Object value=member.get(column);
-			if (value!=null) {
+			loger.debug("column=" + column + ";value=" + value);
+			if (value==null) value="";
+			if (value!=null && !"".equals(value)) {
+				loger.debug("replacing [[" + column + "]] -> " + member.get(column).toString());
 				ret=ret.replace("[[" + column + "]]",member.get(column).toString());
 			}
 		}
+		
 		return ret;
 	}
 
 	public static String doRepalceEmail(String str, HashMap<String,Object> member){
 		String ret=str;
+		if (str==null || str.length()<1) {
+			return null;
+		}			
 		String[] columns={"email","EMAIL","Email","e-mail", "E-mail","e-Mail"};
 		for (String column:columns) {
 			Object value=member.get(column);
 			if (value!=null) {
-				ret=ret.replace("[[" + column + "]]",member.get(column).toString());
+				ret=ret.replace("[[" + column + "]]",member.get("email").toString());
 			}
 		}
 		return ret;
@@ -484,6 +507,8 @@ public class ScheduledEmailBatchSender extends Thread{
 		schedule_type=emailTempalte.getSchedule_type();
 		email_title=emailTempalte.getEmail_title();
 		
+		email_title=doRepalce(email_title,member);
+		
 		String sql="insert into email_sent_history(email, email_template_id, task_name, schedule_type, email_title,send_at) values (";
 		sql +="'" + eamil + "'";
 		sql += "," + email_template_id;
@@ -492,7 +517,7 @@ public class ScheduledEmailBatchSender extends Thread{
 		sql += ",'" + email_title + "'";
 		sql += ",sysdate()) ";
 		Statement stmt = null;
-		
+		loger.debug("addEmailSentHistory sql=" + sql);
 		try {
 			stmt = this.conn.createStatement();
 			stmt.executeUpdate(sql);
