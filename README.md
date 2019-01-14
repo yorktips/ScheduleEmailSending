@@ -1,5 +1,14 @@
 "# ScheduleEmailSending" 
 
+
+-- delete from email_sent_history;
+-- update email_template set send_to_list=null, send_cc=null where id>1;
+-- update email_template set email_title=REPLACE(email_title, '[[last_name]]', '[[lastName]]');
+-- commit;
+
+-- select * from email_sent_history;
+-- select * from email_template;
+
 -- 0. Create function FUN_THIS_YEAR_BIRTHDAY
 drop function     FUN_THIS_YEAR_BIRTHDAY;
 
@@ -66,7 +75,7 @@ create table email_template(
 drop table email_sent_history;
 create table email_sent_history( 
 	id INT NOT NULL AUTO_INCREMENT, 
-	eamil VARCHAR(100) NOT NULL, 
+	email VARCHAR(100) NOT NULL, 
     email_template_id INT ,
 	task_name VARCHAR(100) NOT NULL, -- happy-birthday-email
 	schedule_type VARCHAR(20) NOT NULL, -- daily
@@ -147,7 +156,7 @@ insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task
 	'sql',
 	'[[email]];fan@gmail.com',
 	'fan2@gmail.com',
- 'select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth, char) as dateOfBirth , email, CONVERT(VisaExpire, char) as VisaExpire , TIMESTAMPDIFF(DAY,  sysdate(),VisaExpire) as expiredWithin  from tblstudent where VisaExpire is not null and VisaExpire >0 and  TIMESTAMPDIFF(DAY,  sysdate(),VisaExpire) <90 and email not in (select email from email_sent_history where task_name=''VisaExpire-check-email'' and  TIMESTAMPDIFF(MONTH,  send_at, sysdate()) <=90 )',
+ 'select CONVERT(id, CHAR) as id, title, firstName, lastName, CONVERT(dateOfBirth, char) as dateOfBirth , email, CONVERT(VisaExpire, char) as VisaExpire , TIMESTAMPDIFF(DAY,  sysdate(),VisaExpire) as expiredWithin  from tblstudent where VisaExpire is not null and VisaExpire >0 and  TIMESTAMPDIFF(DAY,  sysdate(),VisaExpire) <90 and email not in (select email from email_sent_history where task_name=''VisaExpire-check-email'' and  TIMESTAMPDIFF(MONTH,  send_at, sysdate()) <=90 )',
 	'Your Visa Perm Expired at [[VisaExpire]]!',
 	'html',
 	'Dear [[first_name]] [[last_name]], Your Visa Perm Expired at [[VisaExpire]]!',
@@ -157,7 +166,7 @@ commit;
 
 
 -- 2.3. Birthday Check
-select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth, char) as dateOfBirth , email, CONVERT(VisaExpire, char) as VisaExpire , TIMESTAMPDIFF(DAY,  sysdate(),VisaExpire) as VisaExpire  
+select CONVERT(id, CHAR) as id, title, firstName, lastName, CONVERT(dateOfBirth, char) as dateOfBirth , email, CONVERT(VisaExpire, char) as VisaExpire , TIMESTAMPDIFF(DAY,  sysdate(),VisaExpire) as VisaExpire  
 	from tblstudent
 	  where dateOfBirth is not null 
 		and dateOfBirth >'0000-00-00' 
@@ -171,7 +180,7 @@ insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task
 	   email_title,email_body_type,email_template,last_send_at)
   values(
     'smtp.gmail.com',
-    null,
+    '456',
     'fan@gmail.com',
     'password',	
     'happy-birthday-email',
@@ -181,7 +190,7 @@ insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task
 	'sql',
 	'[[email]];fan@gmail.com',
 	'fan2@gmail.com',
-    'select CONVERT(id, CHAR) as id, title, firstName, LastName, CONVERT(dateOfBirth, char) as dateOfBirth , email from tblstudent where dateOfBirth is not null and dateOfBirth >0 and TIMESTAMPDIFF(DAY,  FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1 and email not in (select email from email_sent_history where task_name=''happy-birthday-email'' and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) < 360)',
+    'select CONVERT(id, CHAR) as id, title, firstName, lastName, CONVERT(dateOfBirth, char) as dateOfBirth , email from tblstudent where dateOfBirth is not null and dateOfBirth >0 and TIMESTAMPDIFF(DAY,  FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1 and email not in (select email from email_sent_history where task_name=''happy-birthday-email'' and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) < 360)',
 	'Happy Birthday [[first_name]]!',
 	'html',
 	'Dear [[first_name]] [[last_name]], Wish you have a happy birthday!',
