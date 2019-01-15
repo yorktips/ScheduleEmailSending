@@ -12,8 +12,8 @@ import java.util.Set;
 //import java.util.logging.Logger;
 import org.apache.log4j.Logger;
 
-import com.fan.email.entity.EmailTemplate;
-import com.fan.email.util.DateAndTime;
+import com.fan.email.entity.*;
+import com.fan.email.util.*;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -299,13 +299,15 @@ public class ScheduledEmailBatchSender extends Thread{
 		
 		if ("sql".equalsIgnoreCase(emailTempalte.getSend_to_type())) {
 			to=doRepalceEmail(to,member);
+			loger.debug("to_list=" + emailTempalte.getSend_to_list());
+			loger.debug("member.email=" + (String)member.get("email") + ", to=" + to);
 			if (to==null || to.length()<2)
 				to=member.get("email").toString();
-			
-			//cc=doRepalceEmail(cc,member);
-			//bcc=doRepalceEmail(bcc,member);
+			cc=doRepalceEmail(cc,member);
+			bcc=doRepalceEmail(bcc,member);
 			body=doRepalce(body,member);
 			title=doRepalce(title,member);
+			loger.debug("final to=" + to + ";cc=" + cc );
 			
 		}
 		
@@ -326,12 +328,9 @@ public class ScheduledEmailBatchSender extends Thread{
 			props.put("mail.smtp.host", emailTempalte.getSmtp_host());
 			// https://myaccount.google.com/lesssecureapps?pli=1
 			//props.put("mail.smtp.port", emailTempalte.getSmtp_port()); // 465 or 587
-			//props.put("mail.smtp.host", "smtp.gmail.com");
 			//props.put("mail.smtp.socketFactory.port", "587");
 			//props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 			//props.put("mail.smtp.port", "465");
-			//username="freehdmonitor@gmail.com";
-			//password="pasi6733";
 		}else{
 			props.put("mail.smtp.auth", "true");
 			props.put("mail.smtp.starttls.enable", "true");
@@ -356,35 +355,44 @@ public class ScheduledEmailBatchSender extends Thread{
 
 			//1. Set To
 			String[] toEmails=toArrays(to);
-			if (toEmails==null)
+			if (to==null)
 				return ret;
-			for (String toEmail:toEmails) {
-				loger.debug("toEmail=" + toEmail);
-				message.setRecipients(Message.RecipientType.TO,InternetAddress.parse(toEmail));
-			}
+			
+			loger.debug("toEmail=" + to);
+			message.addRecipients(Message.RecipientType.TO, InternetAddress.parse(to));;
 
 			//2. Set CC
 			String[] ccEmails=toArrays(cc);
 			ccEmails=removeDuplicatedIn(ccEmails,toEmails);
+			String sCCEmail="";
 			if (ccEmails!=null) {
 				for (String ccEmail:ccEmails) {
-					loger.debug("ccEmail=" + ccEmail);
-					if (ccEmail!=null && !"".equalsIgnoreCase(ccEmail))
-						message.setRecipients(Message.RecipientType.CC,InternetAddress.parse(ccEmail));
+					if ("".equals(sCCEmail))
+						sCCEmail=ccEmail;
+					else
+						sCCEmail += "," + ccEmail;
 				}
 			}
-		
+			loger.debug("ccEmail=" + sCCEmail);
+			if (sCCEmail!=null && !"".equalsIgnoreCase(sCCEmail))
+				message.addRecipients(Message.RecipientType.CC,InternetAddress.parse(sCCEmail));
+
 			//3. Set BCC
 			String[] bccEmails=toArrays(bcc);
 			bccEmails=removeDuplicatedIn(bccEmails,toEmails);
 			bccEmails=removeDuplicatedIn(bccEmails,ccEmails);
+			String sBccEmails="";
 			if (bccEmails!=null) {
 				for (String bccEmail:bccEmails) {
-					loger.debug("bccEmail=" + bccEmail);
-					if (bccEmail!=null && !"".equalsIgnoreCase(bccEmail))
-						message.setRecipients(Message.RecipientType.BCC,InternetAddress.parse(bccEmail));
+					if ("".equals(sBccEmails))
+						sBccEmails=bccEmail;
+					else
+						sBccEmails += "," + bccEmail;
 				}
 			}
+			loger.debug("bccEmail=" + sBccEmails);
+			if (sBccEmails!=null && !"".equalsIgnoreCase(sBccEmails))
+						message.addRecipients(Message.RecipientType.BCC,InternetAddress.parse(sBccEmails));
 			
 			// Set Subject: header field
 			message.setSubject(title);
@@ -445,10 +453,10 @@ public class ScheduledEmailBatchSender extends Thread{
 		for (String column:columns) {
 			
 			Object value=member.get(column);
-			loger.debug("column=" + column + ";value=" + value);
+			//loger.debug("column=" + column + ";value=" + value);
 			if (value==null) value="";
 			if (value!=null && !"".equals(value)) {
-				loger.debug("replacing [[" + column + "]] -> " + member.get(column).toString());
+				//loger.debug("replacing [[" + column + "]] -> " + member.get(column).toString());
 				ret=ret.replace("[[" + column + "]]",member.get(column).toString());
 			}
 		}
@@ -475,8 +483,8 @@ public class ScheduledEmailBatchSender extends Thread{
 	public static String[] toArrays(String emails) {
 		if (emails==null || "".equals(emails))
 			return null;
-		String lists=emails.replace(",",";");
-		lists=lists.replace(":",";");
+		String lists=emails.replace(";",",");
+		lists=lists.replace(":",",");
         String[] ret=lists.split(";");
         return ret;
 	}
