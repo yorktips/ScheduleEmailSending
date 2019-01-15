@@ -1,4 +1,4 @@
-package com.fan.email.entity;
+package com.ctc.email.entity;
 
 
 import java.sql.Date;

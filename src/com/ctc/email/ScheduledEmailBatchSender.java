@@ -1,4 +1,4 @@
-package com.fan.email;
+package com.ctc.email;
 
 
 import java.util.ArrayList;
@@ -12,8 +12,8 @@ import java.util.Set;
 //import java.util.logging.Logger;
 import org.apache.log4j.Logger;
 
-import com.fan.email.entity.*;
-import com.fan.email.util.*;
+import com.ctc.email.entity.*;
+import com.ctc.email.util.*;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -26,33 +26,6 @@ import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.sql.*;
 
-class Auth {
-	private String userName=null;
-	private String password=null;
-	public Auth(EmailTemplate template ) {
-		if (template!=null) {
-			userName=template.getSmtp_username();
-			password=template.getSmtp_password();
-		}
-	}
-
-	public String getUserName() {
-		return userName;
-	}
-
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-	
-}
 
 public class ScheduledEmailBatchSender extends Thread{
 	static Logger loger = Logger.getLogger(ScheduledEmailBatchSender.class.getName());
@@ -388,7 +361,7 @@ public class ScheduledEmailBatchSender extends Thread{
 			// MailMessage MyMailMessage = new MailMessage();
 			// Set From: header field of the header.
 			message.setFrom(new InternetAddress(from));
-
+			loger.debug("sendfrom=" + from);
 			//1. Set To
 			String[] toEmails=toArrays(to);
 			if (to==null)

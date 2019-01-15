@@ -1,4 +1,4 @@
-package com.fan.email;
+package com.ctc.email;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import com.fan.email.ScheduledEmailBatchSender;
 
 //Useage:
 //java com.fan.email.EmailSending

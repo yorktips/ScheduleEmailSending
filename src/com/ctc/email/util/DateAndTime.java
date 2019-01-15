@@ -1,4 +1,4 @@
-package com.fan.email.util;
+package com.ctc.email.util;
 
 import java.text.Format;
 import java.text.SimpleDateFormat;
