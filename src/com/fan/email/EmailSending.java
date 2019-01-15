@@ -26,7 +26,7 @@ public class EmailSending {
 		InputStream input = null;
 
 		try {
-			input = new FileInputStream("./Database.properties");
+			input = new FileInputStream("Database.properties");
 
 			// load a properties file
 			prop.load(input);

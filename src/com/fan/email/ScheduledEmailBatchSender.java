@@ -26,6 +26,33 @@ import javax.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.sql.*;
 
+class Auth {
+	private String userName=null;
+	private String password=null;
+	public Auth(EmailTemplate template ) {
+		if (template!=null) {
+			userName=template.getSmtp_username();
+			password=template.getSmtp_password();
+		}
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	
+}
 
 public class ScheduledEmailBatchSender extends Thread{
 	static Logger loger = Logger.getLogger(ScheduledEmailBatchSender.class.getName());
@@ -35,7 +62,9 @@ public class ScheduledEmailBatchSender extends Thread{
 	private String DB_URL=null;
 	private String USER=null;
 	private String PASS=null;
-
+	
+	public static Auth auth=null;
+	
 	//private boolean connect(String JDBC_DRIVER , String DB_URL,String USER,String PASS ) {
 	private boolean connect() {
 		boolean ret=false;
@@ -338,11 +367,18 @@ public class ScheduledEmailBatchSender extends Thread{
 			props.put("mail.smtp.port", emailTempalte.getSmtp_port()); 
 		}
 		
+		ScheduledEmailBatchSender.auth= new Auth(emailTempalte);
+		
 		// Get the Session object.
 		Session session = Session.getInstance(props,
 				new javax.mail.Authenticator() {
 					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication("freehdmonitor@gmail.com", "pasi6733");
+						ScheduledEmailBatchSender.auth.getUserName();
+						String username=ScheduledEmailBatchSender.auth.getUserName();
+						String password=ScheduledEmailBatchSender.auth.getPassword();
+						System.out.println("username=" + username);
+						System.out.println("password=" + password);
+						return new PasswordAuthentication(username, password);
 					}
 				});
 
