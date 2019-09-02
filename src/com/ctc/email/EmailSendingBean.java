@@ -7,13 +7,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+
 
 //Useage:
 //java com.fan.email.EmailSending
-public class EmailSending {
+public class EmailSendingBean {
+	static Logger loger = Logger.getLogger(EmailSendingBean.class.getName());
+	
 	// JDBC driver name and database URL
 	static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-	static String DB_URL = "jdbc:mysql://localhost/central";
+	static String DB_URL = "jdbc:mysql://localhost/tc";
 
 	// Database credentials
 	static String USER = "root";
@@ -33,26 +37,29 @@ public class EmailSending {
 			DB_URL=prop.getProperty("DBURL");
 			USER=prop.getProperty("USERNAME");
 			PASS=prop.getProperty("PASSWORDW");
-			System.out.println("DB_URL=" + DB_URL + ";USER=" + USER + ";PASS=" + PASS);
+			loger.debug("DB_URL=" + DB_URL + ";USER=" + USER + ";PASS=" + PASS);
 			
 			try {
-				System.out.println("main start" );
+				loger.debug("main start" );
 				ScheduledEmailBatchSender scheduledEmailBatchSender= new ScheduledEmailBatchSender(JDBC_DRIVER,DB_URL,USER,PASS);
-				System.out.println("thread start" );
+				loger.debug("thread start" );
 				scheduledEmailBatchSender.start();
-				System.out.println("main end" );
+				loger.debug("main end" );
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
+				loger.error(e);
 			}
 			
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			//ex.printStackTrace();
+			loger.error(ex);
 		} finally {
 			if (input != null) {
 				try {
 					input.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					loger.error(e);
+					//e.printStackTrace();
 				}
 			}
 		}

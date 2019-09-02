@@ -1,5 +1,8 @@
 package com.ctc.email.util;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -67,4 +70,26 @@ public class StringToDateUtil {
 		}
 	}
 
+	 public static String templateFile2String(String fullPathTemplateFile) { 
+		 String content=null;
+
+		 try{
+			 content = new String(Files.readAllBytes(Paths.get(fullPathTemplateFile)));
+		 }catch(Exception e) {
+			 e.printStackTrace();
+		 }
+		 
+		 return content;
+	 }
+	 
+	 
+	 public static boolean fileExist(String filepath) {
+		 try{
+			 File tempFile = new File(filepath);
+			 boolean exists = tempFile.exists();
+			 return exists;
+		 }catch(Exception e){}
+		 
+		 return false;
+	 }
 }

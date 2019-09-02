@@ -31,6 +31,46 @@ CREATE FUNCTION FUN_THIS_YEAR_BIRTHDAY(dateOfBirth Date)
 DELIMITER ; 
 
 
+DROP FUNCTION FUN_NEEDTORUN_EMAILTASK;
+
+DELIMITER $$
+CREATE FUNCTION FUN_NEEDTORUN_EMAILTASK(taskType CHAR(12), taskName VARCHAR(250),last_send_at DATE ) RETURNS VARCHAR(1)
+BEGIN
+        DECLARE sDate VARCHAR(25);
+		IF taskType='hourly' THEN
+			IF TIMESTAMPDIFF(HOUR,  last_send_at, SYSDATE()) >=1 THEN
+				RETURN 'Y';
+			END IF;
+		END IF;
+		
+		IF taskType='daily' THEN
+			IF TIMESTAMPDIFF(DAY,  last_send_at, SYSDATE()) >=1 THEN
+				RETURN 'Y';
+			END IF;
+		ELSEIF (taskType='weekly') THEN
+			IF TIMESTAMPDIFF(DAY,  last_send_at, SYSDATE()) >=7 THEN
+				RETURN 'Y';
+			END IF;
+		ELSEIF taskType='monthly' THEN
+			IF TIMESTAMPDIFF(MONTH,  last_send_at, SYSDATE()) >=1 THEN
+				RETURN 'Y';
+			END IF;
+		ELSEIF taskType='yearly' THEN
+			IF TIMESTAMPDIFF(YEAR,  last_send_at, SYSDATE()) >=1 THEN
+				RETURN 'Y';
+			END IF;
+		ELSEIF taskType='onetime' THEN
+			IF last_send_at IS NULL  THEN
+				RETURN 'Y';
+			END IF;
+		END IF;
+		
+		RETURN 'N';
+END $$
+
+DELIMITER ; 
+
+
 -- 1. Create tables
 -- Create one if not exist
 create table student(
@@ -38,6 +78,7 @@ create table student(
    firstname VARCHAR(100) NOT NULL,
    lastname VARCHAR(100) NOT NULL,
    sex      VARCHAR(1) NULL,
+   oen VARCHAR(50) NULL,
    dateOfBirth     DATE NULL,
    email VARCHAR(100) NOT NULL,
    studyPermExpire  DATE,
@@ -54,21 +95,21 @@ create table email_template(
    smtp_port VARCHAR(6)  NULL,
    smtp_username VARCHAR(24) NULL,
    smtp_password VARCHAR(24) NULL,
-   task_name VARCHAR(100) NOT NULL,
-   send_from VARCHAR(100) NOT NULL,
+   task_name VARCHAR(100) NOT NULL,  -- email task name, it will be shown as the job name
+   send_from VARCHAR(100) NOT NULL, -- usually it is same as smtp_username,depends on the SMTP configuration. 
    send_cc VARCHAR(100)  NULL,
    send_bcc VARCHAR(100) NULL,
-   email_body_type VARCHAR(10) NULL,
-   schedule_type VARCHAR(20) NOT NULL, 
-   schedule_time VARCHAR(20) NOT NULL,
-   send_to_type VARCHAR(20) NOT NULL,
-   send_to_list VARCHAR(4000) NULL,
-   send_to_sql VARCHAR(4000) NULL,
-   enabled TINYINT(1) null default 1,
-   email_title VARCHAR(100) NOT NULL,
+   email_body_type VARCHAR(10) NULL,  -- html or text
+   schedule_type VARCHAR(20) NOT NULL,  -- hourly, daily, monthly, yearly, onetime 
+   schedule_time VARCHAR(20) NOT NULL, -- when to send the email. 
+   send_to_type VARCHAR(20) NOT NULL,  -- how to get the email list. "sql" or just leave empty 
+   send_to_list VARCHAR(4000) NULL, -- use email(fanw@gmail.com) directly or variable<#email#> 
+   send_to_sql VARCHAR(4000) NULL,  -- you must include "email" in a sql select 
+   enabled TINYINT(1) null default 1, 
+   email_title VARCHAR(250) NOT NULL,
    email_template VARCHAR(4000) NOT NULL,
-   last_send_at  DATE null,
-   last_finish_at  DATE null,
+   last_send_at  DATETIME null,
+   last_finish_at  DATETIME null,
    PRIMARY KEY ( id )
 );
 
@@ -80,7 +121,7 @@ create table email_sent_history(
 	task_name VARCHAR(100) NOT NULL, -- happy-birthday-email
 	schedule_type VARCHAR(20) NOT NULL, -- daily
 	email_title VARCHAR(100) NOT NULL, -- Happy Birthday Fan!
-	send_at DATE null, 
+	send_at DATETIME null, 
     PRIMARY KEY ( id ));
     
    
@@ -173,8 +214,13 @@ select CONVERT(id, CHAR) as id, title, firstName, lastName, CONVERT(dateOfBirth,
 		and  TIMESTAMPDIFF(DAY,  FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1
 		and email not in (select email from email_sent_history
 					where task_name='happy-birthday-email'
-					and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) <369 );
-    
+					and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) <364 );
+
+insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task_name, send_from,schedule_type, schedule_time,send_to_type,send_to_list,send_cc,send_to_sql, email_title,email_body_type,email_template,last_send_at) values( 'smtp.gmail.com', '456', 'fan@gmail.com', 'password', 'happy-birthday-email', 'infor@ctc.ca', 'daily', '2300', 'sql', '[[email]],fan@gmail.com', 'fan2@gmail.com', 'select CONVERT(id, CHAR) as id, title, firstName, lastName, CONVERT(dateOfBirth, char) as dateOfBirth , email from tblstudent where dateOfBirth is not null and dateOfBirth >0 and TIMESTAMPDIFF(DAY, FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1 and email not in (select email from email_sent_history where task_name=''happy-birthday-email'' and TIMESTAMPDIFF(DAY, send_at, sysdate()) < 360)', 'Happy Birthday [[first_name]]!', 'html', 'Dear [[first_name]] [[last_name]], Wish you have a happy birthday!', sysdate()); 
+commit;
+
+
+-- 2.4. bout Student Password and Email
 insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task_name, send_from,schedule_type,
         schedule_time,send_to_type,send_to_list,send_cc,send_to_sql,
 	   email_title,email_body_type,email_template,last_send_at)
@@ -190,13 +236,15 @@ insert into email_template (smtp_host,smtp_port,smtp_username,smtp_password,task
 	'sql',
 	'[[email]],fan@gmail.com',
 	'fan2@gmail.com',
-    'select CONVERT(id, CHAR) as id, title, firstName, lastName, CONVERT(dateOfBirth, char) as dateOfBirth , email from tblstudent where dateOfBirth is not null and dateOfBirth >0 and TIMESTAMPDIFF(DAY,  FUN_THIS_YEAR_BIRTHDAY(sysdate()),FUN_THIS_YEAR_BIRTHDAY(dateOfBirth)) =1 and email not in (select email from email_sent_history where task_name=''happy-birthday-email'' and  TIMESTAMPDIFF(DAY,  send_at, sysdate()) < 360)',
-	'Happy Birthday [[first_name]]!',
+    'select CONVERT(id, CHAR) as studid, title, firstName || \' \'||lastName as studentname, oen as prtcode,email as password, email as email, CONVERT(dateOfBirth, char) as dateOfBirth from tblstudent where email is not null and oen is not null ',
+	'About Student Password and Email',
 	'html',
-	'Dear [[first_name]] [[last_name]], Wish you have a happy birthday!',
+	'C:\\fan\\StudentPasswordAndIDEmail.html',
 	sysdate());
 commit;
 
+UPDATE email_template SET send_to_sql='SELECT CONVERT(id, CHAR) AS studid, title, CONCAT(CONCAT(firstName ,\' \'),lastName) AS studentname, postalcode AS prtcode,password AS `password`, email AS `email`, CONVERT(dateOfBirth, CHAR) AS dateOfBirth FROM tblstudent WHERE email IS NOT NULL AND id=201500092 ';
+COMMIT;
 
 
                    

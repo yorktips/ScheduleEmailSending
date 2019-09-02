@@ -1,16 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-  <classpathentry kind="src" path="src"/>
-  <classpathentry kind="output" path="target/classes"/>
-  <classpathentry kind="var" path="M2_REPO/javax/mail/mail/1.4.7/mail-1.4.7.jar" sourcepath="M2_REPO/javax/mail/mail/1.4.7/mail-1.4.7-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/javax/activation/activation/1.1/activation-1.1.jar" sourcepath="M2_REPO/javax/activation/activation/1.1/activation-1.1-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/javax/mail/javax.mail-api/1.5.5/javax.mail-api-1.5.5.jar" sourcepath="M2_REPO/javax/mail/javax.mail-api/1.5.5/javax.mail-api-1.5.5-sources.jar"/>
-  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-  <classpathentry kind="var" path="M2_REPO/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar"/>
-  <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17.jar" sourcepath="M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/simplejavamail/simple-java-mail/5.0.3/simple-java-mail-5.0.3.jar" sourcepath="M2_REPO/org/simplejavamail/simple-java-mail/5.0.3/simple-java-mail-5.0.3-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.7.21/slf4j-api-1.7.21.jar" sourcepath="M2_REPO/org/slf4j/slf4j-api/1.7.21/slf4j-api-1.7.21-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/sun/mail/javax.mail/1.5.5/javax.mail-1.5.5.jar" sourcepath="M2_REPO/com/sun/mail/javax.mail/1.5.5/javax.mail-1.5.5-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/github/bbottema/emailaddress-rfc2822/1.0.1/emailaddress-rfc2822-1.0.1.jar" sourcepath="M2_REPO/com/github/bbottema/emailaddress-rfc2822/1.0.1/emailaddress-rfc2822-1.0.1-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/google/code/findbugs/jsr305/3.0.1/jsr305-3.0.1.jar" sourcepath="M2_REPO/com/google/code/findbugs/jsr305/3.0.1/jsr305-3.0.1-sources.jar"/>
+	<classpathentry including="**/*.java" kind="src" output="target/classes" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="var" path="M2_REPO/javax/mail/mail/1.4.7/mail-1.4.7.jar" sourcepath="M2_REPO/javax/mail/mail/1.4.7/mail-1.4.7-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/javax/activation/activation/1.1/activation-1.1.jar" sourcepath="M2_REPO/javax/activation/activation/1.1/activation-1.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/javax/mail/javax.mail-api/1.5.5/javax.mail-api-1.5.5.jar" sourcepath="M2_REPO/javax/mail/javax.mail-api/1.5.5/javax.mail-api-1.5.5-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/mysql/mysql-connector-java/5.1.10/mysql-connector-java-5.1.10.jar"/>
+	<classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17.jar" sourcepath="M2_REPO/log4j/log4j/1.2.17/log4j-1.2.17-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/simplejavamail/simple-java-mail/5.0.3/simple-java-mail-5.0.3.jar" sourcepath="M2_REPO/org/simplejavamail/simple-java-mail/5.0.3/simple-java-mail-5.0.3-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.7.21/slf4j-api-1.7.21.jar" sourcepath="M2_REPO/org/slf4j/slf4j-api/1.7.21/slf4j-api-1.7.21-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/sun/mail/javax.mail/1.5.5/javax.mail-1.5.5.jar" sourcepath="M2_REPO/com/sun/mail/javax.mail/1.5.5/javax.mail-1.5.5-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/github/bbottema/emailaddress-rfc2822/1.0.1/emailaddress-rfc2822-1.0.1.jar" sourcepath="M2_REPO/com/github/bbottema/emailaddress-rfc2822/1.0.1/emailaddress-rfc2822-1.0.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/google/code/findbugs/jsr305/3.0.1/jsr305-3.0.1.jar" sourcepath="M2_REPO/com/google/code/findbugs/jsr305/3.0.1/jsr305-3.0.1-sources.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

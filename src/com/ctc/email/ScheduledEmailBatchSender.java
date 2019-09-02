@@ -43,9 +43,9 @@ public class ScheduledEmailBatchSender extends Thread{
 		boolean ret=false;
 		try{
 			Class.forName(this.JDBC_DRIVER);
-			loger.info("Connecting to a selected database...");
+			loger.debug("Connecting to a selected database...");
 			this.conn = DriverManager.getConnection(this.DB_URL, this.USER, PASS);
-			loger.info("Connected database successfully...");	
+			loger.debug("Connected database successfully...");	
 			ret=true;
 		}catch(Exception e) {
 			loger.error(e);
@@ -55,12 +55,12 @@ public class ScheduledEmailBatchSender extends Thread{
 
 	private boolean disConnect() {
 		boolean ret=false;
-		loger.info("From disConnect Method");
+		loger.debug("From disConnect Method");
 		try {
 			if (this.conn != null) {
-				loger.info("closing conn...");
+				loger.debug("closing conn...");
 				this.conn.close();
-				loger.info("closed conn");
+				loger.debug("closed conn");
 				ret=true;
 				this.conn=null;
 			}
@@ -98,16 +98,16 @@ public class ScheduledEmailBatchSender extends Thread{
 		Statement stmt = null;
 		try {
 			List<EmailTemplate> emailTempaltes=getEmailTemplates(conn);
-
+			loger.debug("Tatal email-sending tasks=" + emailTempaltes.size());
 			for (EmailTemplate emailTempalte : emailTempaltes) {
-				if (needTriggerSending(emailTempalte)) {
+				if (needTriggerSending(conn,emailTempalte)) {
 					updateEmailJobScheduleStatus("last_send_at",emailTempalte);
 					ret += processEmailTemplate(emailTempalte);
 					updateEmailJobScheduleStatus("last_finish_at",emailTempalte);
 				}
 			}
 		}catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			loger.error(e);
 		}finally{
 			try {
@@ -131,7 +131,7 @@ public class ScheduledEmailBatchSender extends Thread{
 		if (conn==null) return null;
 		
 		List<EmailTemplate> templates= new ArrayList<EmailTemplate>();
-		String sql="select * from email_template where enabled=true";
+		String sql="select * from email_template where enabled=true and FUN_NEEDTORUN_EMAILTASK(schedule_type, task_name,last_send_at )='Y' ";
 		Statement stmt = null;
 		try {
 			stmt = conn.createStatement();
@@ -183,7 +183,7 @@ public class ScheduledEmailBatchSender extends Thread{
 	
 	//This function is for future purpose.Currently, always return true.
 	//Job schedule is supposed to set in Windows daily task schedule. 
-	public static boolean needTriggerSending(EmailTemplate emailTempalte) {
+	public static boolean needTriggerSending(Connection conn, EmailTemplate emailTempalte) {
 		boolean bret=false;
 		int nHoursEclipsed=0;
 		String schedule_time=emailTempalte.getSchedule_time();
@@ -290,7 +290,18 @@ public class ScheduledEmailBatchSender extends Thread{
 	public boolean sendEmail(EmailTemplate emailTempalte,HashMap<String,Object> member){
 		boolean ret=false;
 		String   email_title=emailTempalte.getEmail_title();
+		
 		String   email_template=emailTempalte.getEmail_template();
+		
+		if (StringToDateUtil.fileExist(email_template)) {
+			email_template=StringToDateUtil.templateFile2String(email_template);
+		}
+		
+		if (email_template==null || email_template.length()<3) {
+			loger.error("email-template is missing:" + emailTempalte.getEmail_template());
+			return ret;
+		}
+			
 		
 		String body=email_template;
 		String title=email_title;
@@ -455,7 +466,7 @@ public class ScheduledEmailBatchSender extends Thread{
 	}
 	
 	
-	//[[email]] -> fan8@gmail.com
+	//<#email#> -> fan8@gmail.com
 	public static String doRepalce(String str, HashMap<String,Object> member){
 		String ret=str;
 		Set<String> columns=member.keySet();
@@ -466,13 +477,14 @@ public class ScheduledEmailBatchSender extends Thread{
 			if (value==null) value="";
 			if (value!=null && !"".equals(value)) {
 				//loger.debug("replacing [[" + column + "]] -> " + member.get(column).toString());
-				ret=ret.replace("[[" + column + "]]",member.get(column).toString());
+				ret=ret.replace("<#" + column + "#>",member.get(column).toString());
 			}
 		}
 		
 		return ret;
 	}
 
+	//<#email#> -> fan8@gmail.com
 	public static String doRepalceEmail(String str, HashMap<String,Object> member){
 		String ret=str;
 		if (str==null || str.length()<1) {
@@ -482,7 +494,7 @@ public class ScheduledEmailBatchSender extends Thread{
 		for (String column:columns) {
 			Object value=member.get(column);
 			if (value!=null) {
-				ret=ret.replace("[[" + column + "]]",member.get("email").toString());
+				ret=ret.replace("<#" + column + "#>",member.get("email").toString());
 			}
 		}
 		return ret;
