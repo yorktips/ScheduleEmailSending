@@ -131,7 +131,7 @@ public class ScheduledEmailBatchSender extends Thread{
 		if (conn==null) return null;
 		
 		List<EmailTemplate> templates= new ArrayList<EmailTemplate>();
-		String sql="select * from email_template where enabled=true and FUN_NEEDTORUN_EMAILTASK(schedule_type, task_name,last_send_at )='Y' ";
+		String sql="select * from email_template where enabled=true and FUN_NEEDTORUN_EMAILTASK(schedule_type, schedule_time,last_send_at )='Y' ";
 		Statement stmt = null;
 		try {
 			stmt = conn.createStatement();

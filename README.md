@@ -1,14 +1,5 @@
 "# ScheduleEmailSending" 
 
-
--- delete from email_sent_history;
--- update email_template set send_to_list=null, send_cc=null where id>1;
--- update email_template set email_title=REPLACE(email_title, '[[last_name]]', '[[lastName]]');
--- commit;
-
--- select * from email_sent_history;
--- select * from email_template;
-
 -- 0. Create function FUN_THIS_YEAR_BIRTHDAY
 drop function     FUN_THIS_YEAR_BIRTHDAY;
 
@@ -33,39 +24,51 @@ DELIMITER ;
 
 DROP FUNCTION FUN_NEEDTORUN_EMAILTASK;
 
+DROP FUNCTION FUN_NEEDTORUN_EMAILTASK;
+
 DELIMITER $$
-CREATE FUNCTION FUN_NEEDTORUN_EMAILTASK(taskType CHAR(12), taskName VARCHAR(250),last_send_at DATE ) RETURNS VARCHAR(1)
+CREATE FUNCTION FUN_NEEDTORUN_EMAILTASK(taskType CHAR(12), schedule_time VARCHAR(20),last_send_at DATETIME ) RETURNS VARCHAR(1)
 BEGIN
         DECLARE sDate VARCHAR(25);
-		IF taskType='hourly' THEN
-			IF TIMESTAMPDIFF(HOUR,  last_send_at, SYSDATE()) >=1 THEN
-				RETURN 'Y';
-			END IF;
+	IF LOWER(taskType)='hourly' THEN
+		IF (last_send_at IS NULL OR TIMESTAMPDIFF(HOUR,  last_send_at, SYSDATE()) >=1)
+			-- AND (schedule_time is null 
+			--	or CONVERT(DATE_FORMAT(SYSDATE(), "%H%i"),UNSIGNED) >= CONVERT(schedule_time,UNSIGNED))  
+		THEN
+			RETURN 'Y';
 		END IF;
+	END IF;
 		
-		IF taskType='daily' THEN
-			IF TIMESTAMPDIFF(DAY,  last_send_at, SYSDATE()) >=1 THEN
-				RETURN 'Y';
-			END IF;
-		ELSEIF (taskType='weekly') THEN
-			IF TIMESTAMPDIFF(DAY,  last_send_at, SYSDATE()) >=7 THEN
-				RETURN 'Y';
-			END IF;
-		ELSEIF taskType='monthly' THEN
-			IF TIMESTAMPDIFF(MONTH,  last_send_at, SYSDATE()) >=1 THEN
-				RETURN 'Y';
-			END IF;
-		ELSEIF taskType='yearly' THEN
-			IF TIMESTAMPDIFF(YEAR,  last_send_at, SYSDATE()) >=1 THEN
-				RETURN 'Y';
-			END IF;
-		ELSEIF taskType='onetime' THEN
-			IF last_send_at IS NULL  THEN
-				RETURN 'Y';
-			END IF;
+	IF LOWER(taskType)='daily' THEN
+		IF (last_send_at IS NULL OR TIMESTAMPDIFF(DAY,  last_send_at, SYSDATE()) >=1) 
+		THEN
+			RETURN 'Y';
 		END IF;
+	ELSEIF (LOWER(taskType)='weekly') THEN
+		IF (last_send_at IS NULL OR TIMESTAMPDIFF(DAY,  last_send_at, SYSDATE()) >=7) 
+		THEN
+			RETURN 'Y';
+		END IF;
+	ELSEIF LOWER(taskType)='monthly' THEN
+		IF (last_send_at IS NULL OR TIMESTAMPDIFF(MONTH,  last_send_at, SYSDATE()) >=1) 
+		THEN
+			RETURN 'Y';
+		END IF;
+	ELSEIF LOWER(taskType)='yearly' THEN
+		IF (last_send_at IS NULL OR TIMESTAMPDIFF(YEAR,  last_send_at, SYSDATE()) >=1) 
+		THEN
+			RETURN 'Y';
+		END IF;
+	ELSEIF LOWER(taskType)='onetime' THEN
+		IF last_send_at IS NULL  
+			-- AND (schedule_time IS NULL 
+			-- 	OR CONVERT(DATE_FORMAT(SYSDATE(), "%H%i"),UNSIGNED) >= CONVERT(schedule_time,UNSIGNED))  
+		THEN
+			RETURN 'Y';
+		END IF;
+	END IF;
 		
-		RETURN 'N';
+	RETURN 'N';
 END $$
 
 DELIMITER ; 
@@ -100,7 +103,7 @@ create table email_template(
    send_cc VARCHAR(100)  NULL,
    send_bcc VARCHAR(100) NULL,
    email_body_type VARCHAR(10) NULL,  -- html or text
-   schedule_type VARCHAR(20) NOT NULL,  -- hourly, daily, monthly, yearly, onetime 
+   schedule_type VARCHAR(20) NOT NULL,  -- hourly, daily, weekly, monthly, yearly, onetime 
    schedule_time VARCHAR(20) NOT NULL, -- when to send the email. 
    send_to_type VARCHAR(20) NOT NULL,  -- how to get the email list. "sql" or just leave empty 
    send_to_list VARCHAR(4000) NULL, -- use email(fanw@gmail.com) directly or variable<#email#> 
@@ -126,12 +129,18 @@ create table email_sent_history(
     
    
  -- 2. Prepare data for email sending
- 
+ -- delete from email_sent_history;
+-- update email_template set send_to_list=null, send_cc=null where id>1;
+-- update email_template set email_title=REPLACE(email_title, '<#last_name#>', '<#lastName#>');
+-- commit;
+
+-- select * from email_sent_history;
+-- select * from email_template;
 --select to_char(id) as id, first_name, last_name, sex from student order by id;
 --schedule_type: hourly, daily, weekly, monthly, yearly. Or just set NULL and controled by Task Schedule time in Windows.
 --email_body_type: text or html
---send_to_list: fan2@gmail;[[email]]
--- If you use a variable , such as [[email]], send_to_type must be "sql"
+--send_to_list: fan2@gmail;<#email#>
+-- If you use a variable , such as <#email#>, send_to_type must be "sql"
 -- if send_to_type is "sql", you must have send_to_sql
 --Need to set Windows task schedule run every minute if schedule_time is set. Example 1130
 --run "java -jar emailsending.jar" to start the email sending task
