@@ -8,7 +8,7 @@
 	<description>A Scheduled Email Sending Program</description>
 
 	<properties>
-		<mysql.version>5.1.10</mysql.version>
+		<mysql.version>8.0.28</mysql.version>
 		<junit-version>4.11</junit-version>
 		<java.version>1.7</java.version>
 	</properties>
